@@ -9,7 +9,8 @@ export default apiInitializer("1.13.0", (api) => {
   if (settings.display_mode === "first like or solution") {
     api.onAppEvent("discourse-reactions:reaction-toggled", (post, reaction) => {
       // trigger on like, not removing a like
-      if (reaction) {
+
+      if (post.reaction?.can_undo) {
         animationEventHandler.handleActionToggled();
       }
     });

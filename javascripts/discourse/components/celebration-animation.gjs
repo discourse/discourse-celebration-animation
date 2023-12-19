@@ -48,7 +48,7 @@ updateImageTrajectory(image) {
     const slope = deltaY / deltaX; // diagonal trajectory
 
     // faster for wide viewports, slower for narrow viewports
-    const speedAdjustmentFactor = viewportWidth < 650 ? .9 : (viewportWidth > 1400 ? 1.5 : 1);
+    const speedAdjustmentFactor = viewportWidth < 650 ? .9 : (viewportWidth > 1200 ? 1.5 : 1);
     this.speed = baseSpeed * speedAdjustmentFactor;
 
     image.xPos = image.xOffset * viewportWidth;
@@ -93,13 +93,18 @@ updateImageTrajectory(image) {
     }
   }
 
-  resizeCanvas(canvas) {    // need to recalculate on resize or the speeds are way off
+  resizeCanvas(canvas) { // need to recalculate on resize or the speeds are way off
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
     this.images.forEach(image => {
       this.updateImageTrajectory(image);
     });
+  }
+
+  checkAnimationCompleted() {
+    return this.images.every(image =>
+      image.xPos > window.innerWidth || image.yPos > window.innerHeight);
   }
 
   willDestroy() {
@@ -140,7 +145,6 @@ updateImageTrajectory(image) {
     const animate = () => {
       this.animationFrameId = requestAnimationFrame(animate);
       context.clearRect(0, 0, element.width, element.height);
-      let allImagesOffCanvas = false;
 
         this.images.forEach((image, index) => {
         let speedMultiplier = this.calculateSpeedMultiplier(image.xPos, element.width);
@@ -172,16 +176,12 @@ updateImageTrajectory(image) {
             image.xPos += image.xSpeed * speedMultiplier;
             image.yPos += image.ySpeed * speedMultiplier;
             context.drawImage(image.img, image.xPos, image.yPos, newWidth, newHeight);
-
-            // checking if edges of image are still on the canvas
-            if (image.xPos < element.width + newWidth && image.yPos > -newHeight) {
-                allImagesOffCanvas = false;
-            }
         });
 
-        if (allImagesOffCanvas) {
-            cancelAnimationFrame(this.animationFrameId);
-            this.showCanvas = false;
+        if (this.checkAnimationCompleted()) {
+          cancelAnimationFrame(this.animationFrameId);
+          this.showCanvas = false;
+          return;
         }
     };
 
