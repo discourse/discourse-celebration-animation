@@ -140,7 +140,7 @@ updateImageTrajectory(image) {
     const animate = () => {
       this.animationFrameId = requestAnimationFrame(animate);
       context.clearRect(0, 0, element.width, element.height);
-      let allImagesOffCanvas = true;
+      let allImagesOffCanvas = false;
 
         this.images.forEach((image, index) => {
         let speedMultiplier = this.calculateSpeedMultiplier(image.xPos, element.width);
