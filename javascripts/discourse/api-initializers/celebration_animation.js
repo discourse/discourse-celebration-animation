@@ -7,9 +7,9 @@ export default apiInitializer("1.13.0", (api) => {
   const animationEventHandler = api.container.lookup("service:animation-event");
 
   if (settings.display_mode === "first like or solution") {
-    api.onAppEvent("page:like-toggled", (post, likeAction) => {
+    api.onAppEvent("discourse-reactions:reaction-toggled", (post, reaction) => {
       // trigger on like, not removing a like
-      if (likeAction.can_undo) {
+      if (reaction) {
         animationEventHandler.handleActionToggled();
       }
     });
