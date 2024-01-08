@@ -4,20 +4,20 @@ import { action } from '@ember/object';
 import didInsert from "@ember/render-modifiers/modifiers/did-insert";
 import { inject as service } from '@ember/service';
 
+const OBJECT_NAME = "animationFirstVisit";
+
 export default class CelebrationAnimation extends Component {
   @service animationEvent;
   @tracked images = [];
   @tracked showCanvas = null;
-  @tracked
-  hasSeenAnimation = localStorage.getItem("hasSeenAnimation") === "true";
-
   animationFrameId = null;
-  stragglerIndex = 0;
+
+  // the straggler is one of the images that intentionally lags behind the rest in the animation
+  stragglerIndex = 4;
 
   constructor() {
     super(...arguments);
 
-    this.checkAnimationSeen();
 
     const parsedSetting = JSON.parse(settings.animation_images);
 
@@ -33,15 +33,18 @@ export default class CelebrationAnimation extends Component {
 
     this.animationEvent.addObserver('startAnimation', this, this.toggledAction);
 
-    if (settings.display_mode === "first visit") {
-      this.showCanvas = true;
+    if (settings.display_mode.includes("first visit")) {
+      if (settings.test_mode || this.animationEvent.storageExpired(OBJECT_NAME)) {
+        this.animationEvent.setLocalStorage(OBJECT_NAME);
+        this.showCanvas = true;
+      }
     }
   }
 
 updateImageTrajectory(image) {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const baseSpeed = 15;
+    const baseSpeed = 14; // overall speed
 
     const deltaX = viewportWidth;
     const deltaY = -viewportHeight;
@@ -70,27 +73,6 @@ updateImageTrajectory(image) {
     const speedMultiplier = Math.max(minSpeed, 1.2 - Math.pow((distanceFromMid - maxSpeedAt) / maxSpeedAt, 2));
 
     return Math.min(speedMultiplier * maxSpeed, maxSpeed);
-  }
-
-  setLocalStorage(state) {
-    const currentTime = new Date().getTime();
-    const data = {
-      state,
-      timestamp: currentTime
-    };
-    localStorage.setItem("hasSeenAnimation", JSON.stringify(data));
-    this.hasSeenAnimation = state;
-  }
-
-  checkAnimationSeen() {
-    const data = JSON.parse(localStorage.getItem("hasSeenAnimation"));
-    if (data) {
-      const currentTime = new Date().getTime();
-      const totalTime = currentTime - data.timestamp;
-      const day = 24 * 60 * 60 * 1000; // 24 hours
-
-      this.hasSeenAnimation = data && totalTime < day && data.state === true;
-    }
   }
 
   resizeCanvas(canvas) { // need to recalculate on resize or the speeds are way off
@@ -127,11 +109,6 @@ updateImageTrajectory(image) {
 
   @action
   didInsertCanvas(element) {
-    if (this.hasSeenAnimation && !settings.test_mode) {
-      this.showCanvas = false;
-      return;
-    }
-
     const context = element.getContext('2d');
     window.addEventListener('resize', () => this.resizeCanvas(element));
     this.resizeCanvas(element); // manually setup
@@ -140,7 +117,7 @@ updateImageTrajectory(image) {
     const viewportWidth = window.innerWidth;
 
     // Delay start on narrow viewports otherwise we get overlap
-    const stragglerStartDelay = viewportWidth < 800 ? 50 : 0; 
+    const stragglerStartDelay = viewportWidth < 800 ? 70 : 0;
 
     const animate = () => {
       this.animationFrameId = requestAnimationFrame(animate);
@@ -151,8 +128,7 @@ updateImageTrajectory(image) {
             // larger images for larger viewports
             const scaleRatio = Math.min(Math.max(viewportWidth / 1110, 0.8), 1.1);
 
-            // scale images based on set width
-            const newWidth = 250 * scaleRatio;
+            const newWidth = 400 * scaleRatio;  // scale images based on default width
             const aspectRatio = image.img.width / image.img.height;
             const newHeight = newWidth / aspectRatio;
 
@@ -167,7 +143,7 @@ updateImageTrajectory(image) {
                 const centralPoint = Math.max(viewportWidth * 0.5, 270);
                 const nearCenter = Math.abs(image.xPos - centralPoint) ;
                 if (nearCenter) {
-                    speedMultiplier *= 0.8;
+                    speedMultiplier *= 0.77;
                 } else {
                     speedMultiplier *= 1.4;
                 }
@@ -185,7 +161,6 @@ updateImageTrajectory(image) {
         }
     };
 
-    this.setLocalStorage(true);
     animate();
 }
 
