@@ -26,11 +26,12 @@ animation_images:
     }
 
 display_mode:
-  default: "first visit"
+  default: "first visit and first like or solution"
   type: enum
   choices:
     - "first visit"
     - "first like or solution"
+    - "first visit and first like or solution"
   description: The animation will display once daily per browser, based on this action
 
 test_mode:
