@@ -6,7 +6,6 @@
   height: 100dvh;
   z-index: 999999; // over everything
   pointer-events: none;
-
   @media (prefers-reduced-motion) {
     display: none;
   }
