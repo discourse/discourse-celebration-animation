@@ -33,7 +33,7 @@ export default class CelebrationAnimation extends Component {
 
     this.animationEvent.addObserver('startAnimation', this, this.toggledAction);
 
-    if (settings.display_mode.includes("first visit")) {
+    if (settings.display_mode.includes("first visit") || settings.display_mode.includes("every other day")) {
       if (settings.test_mode || this.animationEvent.storageExpired(OBJECT_NAME)) {
         this.animationEvent.setLocalStorage(OBJECT_NAME);
         this.showCanvas = true;

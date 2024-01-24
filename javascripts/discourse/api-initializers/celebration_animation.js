@@ -22,14 +22,17 @@ export default apiInitializer("1.13.0", (api) => {
 
   if (
     settings.display_mode === "first like or solution" ||
-    settings.display_mode === "first visit and first like or solution"
+    settings.display_mode === "first visit and first like or solution" ||
+    settings.display_mode === "every other day and first solution"
   ) {
-    api.onAppEvent("discourse-reactions:reaction-toggled", (post) => {
-      // Trigger on like, not removing a like
-      if (post.reaction?.can_undo) {
-        handleToggledAction();
-      }
-    });
+    if (settings.display_mode !== "every other day and first solution") {
+      api.onAppEvent("discourse-reactions:reaction-toggled", (post) => {
+        // Trigger on like, not removing a like
+        if (post.reaction?.can_undo) {
+          handleToggledAction();
+        }
+      });
+    }
 
     api.onAppEvent("discourse-solved:solution-toggled", (post) => {
       // Trigger on solution, not removing a solution

@@ -15,7 +15,17 @@ export default class animationEvent extends Service {
   }
 
   setLocalStorage(objectName) {
-    const expiryTime = 24 * 60 * 60 * 1000; // 24 hours
+    let expiryTime;
+
+    if (
+      objectName === "animationFirstVisit" &&
+      settings.display_mode === "every other day and first solution"
+    ) {
+      expiryTime = 24 * 60 * 60 * 1000 * 2; // 48 hours
+    } else {
+      expiryTime = 24 * 60 * 60 * 1000; // 24 hours
+    }
+
     const data = {
       timestamp: this.currentTime,
       expiresAt: this.currentTime + expiryTime,
