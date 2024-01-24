@@ -32,6 +32,7 @@ display_mode:
     - "first visit"
     - "first like or solution"
     - "first visit and first like or solution"
+    - "every other day and first solution"
   description: The animation will display once daily per browser, based on this action
 
 test_mode:
