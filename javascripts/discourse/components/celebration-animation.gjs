@@ -46,6 +46,17 @@ export default class CelebrationAnimation extends Component {
     }
   }
 
+  willDestroy() {
+    super.willDestroy();
+    this.showCanvas = false;
+    window.removeEventListener("resize", () => this.resizeCanvas());
+    this.animationEvent.removeObserver(
+      "startAnimation",
+      this,
+      this.toggledAction
+    );
+  }
+
   updateImageTrajectory(image) {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
@@ -98,17 +109,6 @@ export default class CelebrationAnimation extends Component {
     return this.images.every(
       (image) =>
         image.xPos > window.innerWidth || image.yPos > window.innerHeight
-    );
-  }
-
-  willDestroy() {
-    super.willDestroy();
-    this.showCanvas = false;
-    window.removeEventListener("resize", () => this.resizeCanvas());
-    this.animationEvent.removeObserver(
-      "startAnimation",
-      this,
-      this.toggledAction
     );
   }
 
