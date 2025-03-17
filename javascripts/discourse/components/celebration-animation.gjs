@@ -8,6 +8,7 @@ const OBJECT_NAME = "animationFirstVisit";
 
 export default class CelebrationAnimation extends Component {
   @service animationEvent;
+
   @tracked images = [];
   @tracked showCanvas = null;
   animationFrameId = null;
