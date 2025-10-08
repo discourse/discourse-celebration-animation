@@ -3,7 +3,7 @@ import CelebrationAnimation from "../components/celebration-animation";
 
 const OBJECT_NAME = "animationLikeSolutionToggled";
 
-export default apiInitializer("1.13.0", (api) => {
+export default apiInitializer((api) => {
   api.renderInOutlet("above-site-header", CelebrationAnimation);
 
   const animationEventHandler = api.container.lookup("service:animation-event");
