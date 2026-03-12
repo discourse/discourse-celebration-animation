@@ -2,7 +2,7 @@ import { tracked } from "@glimmer/tracking";
 import { action } from "@ember/object";
 import Service from "@ember/service";
 
-export default class animationEvent extends Service {
+export default class AnimationEvent extends Service {
   @tracked startAnimation = false;
   currentTime = new Date().getTime();
 
