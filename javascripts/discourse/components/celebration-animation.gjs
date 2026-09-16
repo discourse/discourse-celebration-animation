@@ -11,7 +11,7 @@ export default class CelebrationAnimation extends Component {
   @service animationEvent;
 
   @tracked images = [];
-  @tracked showCanvas = null;
+  @tracked showAnimation = null;
   animationFrameId = null;
 
   // the straggler is one of the images that intentionally lags behind the rest in the animation
@@ -20,43 +20,54 @@ export default class CelebrationAnimation extends Component {
   constructor() {
     super(...arguments);
 
-    const parsedSetting = JSON.parse(settings.animation_images);
-
-    this.images = parsedSetting;
+    this.images = settings.animation_images
+      .filter((image) => image.image)
+      .map((image) => ({ ...image }));
 
     this.images.forEach((image) => {
-      image.img = new Image();
-      image.img.onload = () => {
-        this.updateImageTrajectory(image);
-      };
-      image.img.src = image.src;
+      image.source = image.image;
+      image.scale = Number(image.scale) > 0 ? Number(image.scale) : 1;
     });
+    this.motionPreference = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    );
+    this.motionPreference.addEventListener("change", this.motionChanged);
 
     this.animationEvent.addObserver("startAnimation", this, this.toggledAction);
 
     if (
-      settings.display_mode.includes("first visit") ||
-      settings.display_mode.includes("every other day")
+      !this.motionPreference.matches &&
+      this.images.length &&
+      (settings.display_mode.includes("first visit") ||
+        settings.display_mode.includes("every other day"))
     ) {
       if (
         settings.test_mode ||
         this.animationEvent.storageExpired(OBJECT_NAME)
       ) {
         this.animationEvent.setLocalStorage(OBJECT_NAME);
-        this.showCanvas = true;
+        this.showAnimation = true;
       }
     }
   }
 
   willDestroy() {
     super.willDestroy();
-    this.showCanvas = false;
-    window.removeEventListener("resize", () => this.resizeCanvas());
+    cancelAnimationFrame(this.animationFrameId);
+    this.motionPreference.removeEventListener("change", this.motionChanged);
     this.animationEvent.removeObserver(
       "startAnimation",
       this,
       this.toggledAction
     );
+  }
+
+  @action
+  motionChanged() {
+    if (this.motionPreference.matches) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.showAnimation = false;
+    }
   }
 
   updateImageTrajectory(image) {
@@ -81,10 +92,10 @@ export default class CelebrationAnimation extends Component {
     image.ySpeed = image.xSpeed * slope;
   }
 
-  calculateSpeedMultiplier(xPos, canvasWidth) {
-    const midPoint = canvasWidth / 2 - 200; // calculate and shift midpoint a little
+  calculateSpeedMultiplier(xPos, viewportWidth) {
+    const midPoint = viewportWidth / 2 - 200; // calculate and shift midpoint a little
     const distanceFromMid = Math.abs(xPos - midPoint) * 0.35;
-    const maxSpeedAt = canvasWidth / 3;
+    const maxSpeedAt = viewportWidth / 3;
     const minSpeed = 0.05;
     const maxSpeed = 1.3;
 
@@ -97,11 +108,7 @@ export default class CelebrationAnimation extends Component {
     return Math.min(speedMultiplier * maxSpeed, maxSpeed);
   }
 
-  resizeCanvas(canvas) {
-    // need to recalculate on resize or the speeds are way off
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
+  resetTrajectories() {
     this.images.forEach((image) => {
       this.updateImageTrajectory(image);
     });
@@ -110,14 +117,22 @@ export default class CelebrationAnimation extends Component {
   checkAnimationCompleted() {
     return this.images.every(
       (image) =>
-        image.xPos > window.innerWidth || image.yPos > window.innerHeight
+        !image.img.naturalWidth ||
+        image.xPos > window.innerWidth ||
+        image.yPos + image.img.offsetHeight < 0
     );
   }
 
   @action
   toggledAction() {
-    this.actionToggled = this.animationEvent.actionToggled;
-    this.showCanvas = true;
+    if (
+      this.motionPreference.matches ||
+      !this.images.length ||
+      this.showAnimation
+    ) {
+      return;
+    }
+    this.showAnimation = true;
 
     this.images.forEach((image) => {
       this.updateImageTrajectory(image);
@@ -125,10 +140,12 @@ export default class CelebrationAnimation extends Component {
   }
 
   @action
-  didInsertCanvas(element) {
-    const context = element.getContext("2d");
-    window.addEventListener("resize", () => this.resizeCanvas(element));
-    this.resizeCanvas(element); // manually setup
+  didInsertAnimation(element) {
+    const nodes = element.querySelectorAll("img");
+    this.images.forEach((image, index) => {
+      image.img = nodes[index];
+    });
+    this.resetTrajectories();
 
     let stragglerDelayCount = 0; // reset straggler counter
     const viewportWidth = window.innerWidth;
@@ -136,26 +153,43 @@ export default class CelebrationAnimation extends Component {
     // Delay start on narrow viewports otherwise we get overlap
     const stragglerStartDelay = viewportWidth < 800 ? 70 : 0;
 
-    const animate = () => {
-      this.animationFrameId = requestAnimationFrame(animate);
-      context.clearRect(0, 0, element.width, element.height);
+    let startedAt;
+    let previousTime;
+    let elapsed = 0;
+    const animate = (time) => {
+      startedAt ??= time;
+      if (
+        !this.images.every((image) => image.img.complete) &&
+        time - startedAt < 10000
+      ) {
+        this.animationFrameId = requestAnimationFrame(animate);
+        return;
+      }
+      const step =
+        previousTime === undefined
+          ? 1
+          : Math.min((time - previousTime) / (1000 / 60), 3);
+      previousTime = time;
+      elapsed += step;
 
       this.images.forEach((image, index) => {
         let speedMultiplier = this.calculateSpeedMultiplier(
           image.xPos,
-          element.width
+          viewportWidth
         );
         // larger images for larger viewports
         const scaleRatio = Math.min(Math.max(viewportWidth / 1110, 0.8), 1.1);
 
-        const newWidth = 400 * scaleRatio; // scale images based on default width
-        const aspectRatio = image.img.width / image.img.height;
-        const newHeight = newWidth / aspectRatio;
+        const newWidth = 400 * scaleRatio * image.scale;
+        image.img.style.width = `${newWidth}px`;
+        if (!image.img.naturalWidth) {
+          return;
+        }
 
         // handle straggler movement
         if (index === this.stragglerIndex) {
           if (stragglerDelayCount < stragglerStartDelay) {
-            stragglerDelayCount++;
+            stragglerDelayCount += step;
             return; // skip straggler until count is met
           }
 
@@ -169,33 +203,34 @@ export default class CelebrationAnimation extends Component {
           }
         }
 
-        image.xPos += image.xSpeed * speedMultiplier;
-        image.yPos += image.ySpeed * speedMultiplier;
-        context.drawImage(
-          image.img,
-          image.xPos,
-          image.yPos,
-          newWidth,
-          newHeight
-        );
+        image.xPos += image.xSpeed * speedMultiplier * step;
+        image.yPos += image.ySpeed * speedMultiplier * step;
+        image.img.style.visibility = "visible";
+        image.img.style.transform = `translate3d(${image.xPos}px, ${image.yPos}px, 0)`;
       });
 
-      if (this.checkAnimationCompleted()) {
+      if (this.checkAnimationCompleted() || elapsed > 60 * 30) {
         cancelAnimationFrame(this.animationFrameId);
-        this.showCanvas = false;
+        this.showAnimation = false;
         return;
       }
+      this.animationFrameId = requestAnimationFrame(animate);
     };
 
-    animate();
+    this.animationFrameId = requestAnimationFrame(animate);
   }
 
   <template>
-    {{#if this.showCanvas}}
-      <canvas
-        {{didInsert this.didInsertCanvas}}
-        id="celebration-animation-canvas"
-      ></canvas>
+    {{#if this.showAnimation}}
+      <div
+        {{didInsert this.didInsertAnimation}}
+        id="celebration-animation-overlay"
+        aria-hidden="true"
+      >
+        {{#each this.images as |image|}}
+          <img src={{image.source}} alt="" />
+        {{/each}}
+      </div>
     {{/if}}
   </template>
 }

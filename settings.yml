@@ -1,29 +1,24 @@
 animation_images:
-  default: "[]"
-  json_schema: >-
-    {
-      "type": "array",
-      "uniqueItems": true,
-      "items": {
-        "type": "object",
-        "properties": {
-          "src": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Image source (upload to a staff topic to keep local)"
-          },
-          "xOffset": {
-            "type": "number",
-            "description": "Offset multiplier relative to viewport (0-2)"
-          },
-          "yOffset": {
-            "type": "number",
-            "description": "Offset multiplier relative to viewport (0-2)"
-          }
-        },
-        "additionalProperties": false
-      }
-    }
+  type: objects
+  default: []
+  schema:
+    name: image
+    properties:
+      image:
+        type: upload
+        required: true
+      xOffset:
+        type: float
+        default: 0
+      yOffset:
+        type: float
+        default: 0
+      scale:
+        type: float
+        default: 1
+        validations:
+          min: 0.1
+          max: 5
 
 display_mode:
   default: "first visit and first like or solution"

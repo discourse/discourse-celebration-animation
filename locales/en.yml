@@ -1,3 +1,20 @@
 en:
   theme_metadata:
     description: ""
+    settings:
+      animation_images:
+        description: "Images to display in the celebration animation."
+        schema:
+          properties:
+            image:
+              label: "Image"
+              description: "Upload a static or animated image with a transparent background."
+            xOffset:
+              label: "Horizontal offset"
+              description: "Offset multiplier relative to viewport width (0–2)."
+            yOffset:
+              label: "Vertical offset"
+              description: "Offset multiplier relative to viewport height (0–2)."
+            scale:
+              label: "Scale"
+              description: "Size multiplier. Use 1 for the standard size or increase for wider artwork."

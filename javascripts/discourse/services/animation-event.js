@@ -35,8 +35,8 @@ export default class AnimationEvent extends Service {
 
   @action
   handleActionToggled() {
-    const canvas = document.getElementById("celebration-animation-canvas");
-    if (!canvas) {
+    const overlay = document.getElementById("celebration-animation-overlay");
+    if (!overlay) {
       // don't trigger if already animating
       this.startAnimation = true;
     }
