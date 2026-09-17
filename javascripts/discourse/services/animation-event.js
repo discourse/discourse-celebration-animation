@@ -1,10 +1,23 @@
 import { tracked } from "@glimmer/tracking";
 import { action } from "@ember/object";
-import Service from "@ember/service";
+import Service, { service } from "@ember/service";
 
 export default class AnimationEvent extends Service {
+  @service currentUser;
+
   @tracked startAnimation = false;
   currentTime = new Date().getTime();
+
+  get isTestUser() {
+    const groupIds = (settings.test_groups || "")
+      .split("|")
+      .filter(Boolean)
+      .map(Number);
+    return (
+      this.currentUser?.groups?.some((group) => groupIds.includes(group.id)) ||
+      false
+    );
+  }
 
   storageExpired(objectName) {
     const data = JSON.parse(localStorage.getItem(objectName));
@@ -35,10 +48,10 @@ export default class AnimationEvent extends Service {
 
   @action
   handleActionToggled() {
-    const canvas = document.getElementById("celebration-animation-canvas");
-    if (!canvas) {
+    const overlay = document.getElementById("celebration-animation-overlay");
+    if (!overlay) {
       // don't trigger if already animating
-      this.startAnimation = true;
+      this.startAnimation = !this.startAnimation;
     }
   }
 }

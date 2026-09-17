@@ -1,3 +1,23 @@
 en:
   theme_metadata:
     description: ""
+    settings:
+      animation_images:
+        description: "Images to display in the celebration animation."
+        schema:
+          properties:
+            image:
+              label: "Image"
+              description: "Upload a static or animated image with a transparent background."
+            xOffset:
+              label: "Horizontal offset"
+              description: "Offset multiplier relative to viewport width. Negative values start farther left."
+            yOffset:
+              label: "Vertical offset"
+              description: "Offset multiplier relative to viewport height. Values above 1 start below the viewport."
+      animation_scale:
+        description: "Size multiplier applied to every celebration image. Use 1 for the standard size."
+      animation_angle:
+        description: "Rotation angle in degrees applied to every celebration image."
+      test_groups:
+        description: "Members of these groups bypass celebration cooldowns. Leave empty for normal behavior. Display mode and reduced-motion preferences still apply."

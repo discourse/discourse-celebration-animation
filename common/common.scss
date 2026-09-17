@@ -1,4 +1,4 @@
-#celebration-animation-canvas {
+#celebration-animation-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -6,6 +6,17 @@
   height: 100dvh;
   z-index: 999999; // over everything
   pointer-events: none;
+  overflow: hidden;
+
+  img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    max-width: none;
+    height: auto;
+    visibility: hidden;
+    will-change: transform;
+  }
 
   @media (prefers-reduced-motion) {
     display: none;

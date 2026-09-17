@@ -1,29 +1,32 @@
 animation_images:
-  default: "[]"
-  json_schema: >-
-    {
-      "type": "array",
-      "uniqueItems": true,
-      "items": {
-        "type": "object",
-        "properties": {
-          "src": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Image source (upload to a staff topic to keep local)"
-          },
-          "xOffset": {
-            "type": "number",
-            "description": "Offset multiplier relative to viewport (0-2)"
-          },
-          "yOffset": {
-            "type": "number",
-            "description": "Offset multiplier relative to viewport (0-2)"
-          }
-        },
-        "additionalProperties": false
-      }
-    }
+  type: objects
+  default: []
+  schema:
+    name: image
+    properties:
+      image:
+        type: upload
+        required: true
+      xOffset:
+        type: float
+        default: 0
+      yOffset:
+        type: float
+        default: 0
+
+animation_scale:
+  type: float
+  default: 1
+  min: 0.1
+  max: 5
+  description: Size multiplier applied to every celebration image
+
+animation_angle:
+  type: float
+  default: 0
+  min: -180
+  max: 180
+  description: Rotation angle in degrees applied to every celebration image
 
 display_mode:
   default: "first visit and first like or solution"
@@ -35,6 +38,8 @@ display_mode:
     - "every other day and first solution"
   description: The animation will display once daily per browser, based on this action
 
-test_mode:
-  default: false
-  description: when enabled, the animation will show more than once per day
+test_groups:
+  type: list
+  list_type: group
+  default: ""
+  description: Members of these groups bypass celebration cooldowns. Leave empty for normal behavior.
