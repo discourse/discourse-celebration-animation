@@ -118,8 +118,8 @@ export default class CelebrationAnimation extends Component {
     return this.images.every(
       (image) =>
         !image.img.naturalWidth ||
-        image.xPos > window.innerWidth ||
-        image.yPos + image.img.offsetHeight < 0
+        image.xPos - image.scaleOffsetX > window.innerWidth ||
+        image.yPos - image.scaleOffsetY + image.img.offsetHeight < 0
     );
   }
 
@@ -180,11 +180,18 @@ export default class CelebrationAnimation extends Component {
         // larger images for larger viewports
         const scaleRatio = Math.min(Math.max(viewportWidth / 1110, 0.8), 1.1);
 
-        const newWidth = 400 * scaleRatio * image.scale;
+        const baseWidth = 400 * scaleRatio;
+        const newWidth = baseWidth * image.scale;
         image.img.style.width = `${newWidth}px`;
         if (!image.img.naturalWidth) {
           return;
         }
+
+        // Keep the scale-1 center on the same trajectory as image size changes.
+        image.scaleOffsetX = (newWidth - baseWidth) / 2;
+        image.scaleOffsetY =
+          image.scaleOffsetX *
+          (image.img.naturalHeight / image.img.naturalWidth);
 
         // handle straggler movement
         if (index === this.stragglerIndex) {
@@ -206,7 +213,9 @@ export default class CelebrationAnimation extends Component {
         image.xPos += image.xSpeed * speedMultiplier * step;
         image.yPos += image.ySpeed * speedMultiplier * step;
         image.img.style.visibility = "visible";
-        image.img.style.transform = `translate3d(${image.xPos}px, ${image.yPos}px, 0)`;
+        const renderX = image.xPos - image.scaleOffsetX;
+        const renderY = image.yPos - image.scaleOffsetY;
+        image.img.style.transform = `translate3d(${renderX}px, ${renderY}px, 0)`;
       });
 
       if (this.checkAnimationCompleted() || elapsed > 60 * 30) {
