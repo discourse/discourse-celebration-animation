@@ -10,11 +10,11 @@ export default apiInitializer((api) => {
 
   function handleToggledAction() {
     if (
-      settings.test_mode ||
+      animationEventHandler.isTestUser ||
       animationEventHandler.storageExpired(OBJECT_NAME)
     ) {
       animationEventHandler.handleActionToggled();
-      if (!settings.test_mode) {
+      if (!animationEventHandler.isTestUser) {
         animationEventHandler.setLocalStorage(OBJECT_NAME);
       }
     }

@@ -13,6 +13,8 @@ export default class CelebrationAnimation extends Component {
   @tracked images = [];
   @tracked showAnimation = null;
   animationFrameId = null;
+  angle = Number(settings.animation_angle) || 0;
+  scale = Number(settings.animation_scale) || 1;
 
   // the straggler is one of the images that intentionally lags behind the rest in the animation
   stragglerIndex = 4;
@@ -26,7 +28,6 @@ export default class CelebrationAnimation extends Component {
 
     this.images.forEach((image) => {
       image.source = image.image;
-      image.scale = Number(image.scale) > 0 ? Number(image.scale) : 1;
     });
     this.motionPreference = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
@@ -42,10 +43,12 @@ export default class CelebrationAnimation extends Component {
         settings.display_mode.includes("every other day"))
     ) {
       if (
-        settings.test_mode ||
+        this.animationEvent.isTestUser ||
         this.animationEvent.storageExpired(OBJECT_NAME)
       ) {
-        this.animationEvent.setLocalStorage(OBJECT_NAME);
+        if (!this.animationEvent.isTestUser) {
+          this.animationEvent.setLocalStorage(OBJECT_NAME);
+        }
         this.showAnimation = true;
       }
     }
@@ -115,12 +118,15 @@ export default class CelebrationAnimation extends Component {
   }
 
   checkAnimationCompleted() {
-    return this.images.every(
-      (image) =>
-        !image.img.naturalWidth ||
-        image.xPos - image.scaleOffsetX > window.innerWidth ||
-        image.yPos - image.scaleOffsetY + image.img.offsetHeight < 0
-    );
+    return this.images.every((image) => {
+      if (!image.img.naturalWidth) {
+        return true;
+      }
+
+      // Include rotation when deciding whether the whole image has left.
+      const bounds = image.img.getBoundingClientRect();
+      return bounds.left > window.innerWidth || bounds.bottom < 0;
+    });
   }
 
   @action
@@ -181,7 +187,7 @@ export default class CelebrationAnimation extends Component {
         const scaleRatio = Math.min(Math.max(viewportWidth / 1110, 0.8), 1.1);
 
         const baseWidth = 400 * scaleRatio;
-        const newWidth = baseWidth * image.scale;
+        const newWidth = baseWidth * this.scale;
         image.img.style.width = `${newWidth}px`;
         if (!image.img.naturalWidth) {
           return;
@@ -215,7 +221,7 @@ export default class CelebrationAnimation extends Component {
         image.img.style.visibility = "visible";
         const renderX = image.xPos - image.scaleOffsetX;
         const renderY = image.yPos - image.scaleOffsetY;
-        image.img.style.transform = `translate3d(${renderX}px, ${renderY}px, 0)`;
+        image.img.style.transform = `translate3d(${renderX}px, ${renderY}px, 0) rotate(${this.angle}deg)`;
       });
 
       if (this.checkAnimationCompleted() || elapsed > 60 * 30) {

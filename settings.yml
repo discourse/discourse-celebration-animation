@@ -13,12 +13,20 @@ animation_images:
       yOffset:
         type: float
         default: 0
-      scale:
-        type: float
-        default: 1
-        validations:
-          min: 0.1
-          max: 5
+
+animation_scale:
+  type: float
+  default: 1
+  min: 0.1
+  max: 5
+  description: Size multiplier applied to every celebration image
+
+animation_angle:
+  type: float
+  default: 0
+  min: -180
+  max: 180
+  description: Rotation angle in degrees applied to every celebration image
 
 display_mode:
   default: "first visit and first like or solution"
@@ -30,6 +38,8 @@ display_mode:
     - "every other day and first solution"
   description: The animation will display once daily per browser, based on this action
 
-test_mode:
-  default: false
-  description: when enabled, the animation will show more than once per day
+test_groups:
+  type: list
+  list_type: group
+  default: ""
+  description: Members of these groups bypass celebration cooldowns. Leave empty for normal behavior.
